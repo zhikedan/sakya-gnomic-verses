@@ -1,0 +1,28 @@
+{
+  "name": "sakya-gnomic-verses",
+  "version": "1.0.0",
+  "description": "《萨迦格言》九品 459 颂：结构化知识库、逐颂原文白话、AI 技能规范与问答留痕工具",
+  "keywords": [
+    "萨迦格言",
+    "萨迦班智达",
+    "藏族格言",
+    "藏地论语",
+    "sakya",
+    "gnomic-verses",
+    "skill",
+    "白话"
+  ],
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "node selftest.js",
+    "check": "node selftest.js",
+    "build": "node build_baihua.js && node record.js rebuild",
+    "check:baihua": "node check_baihua.js",
+    "check:refs": "node check_refs.js",
+    "record": "node record.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

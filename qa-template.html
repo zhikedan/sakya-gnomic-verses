@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang=zh-CN><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>萨迦格言 · 问答台账</title>
+<style>
+:root{--bg:#1b1410;--card:#241b15;--ink:#f0e6d2;--dim:#a89880;--gold:#d8a94b;--line:#3a2c22;--ok:#8bbf72}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:18px 14px 60px}
+h1{font-size:19px;margin:6px 0 2px;letter-spacing:.5px}
+.sub{color:var(--dim);font-size:13px;margin-bottom:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0}
+input,select{font:inherit;background:#181209;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+#s{flex:1;min-width:170px}
+button{font:inherit;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer}
+button.on{border-color:var(--gold);color:var(--gold)}
+.cards{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.kpi{flex:1;min-width:118px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;color:var(--gold)}
+.kpi span{font-size:12px;color:var(--dim)}
+.gauge{height:7px;background:#181209;border-radius:4px;margin:6px 0;overflow:hidden}
+.gauge i{display:block;height:100%;background:var(--gold);transition:width .3s}
+.item{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
+.hd{display:flex;gap:10px;align-items:baseline;padding:11px 13px;cursor:pointer}
+.hd:hover{background:#2a2018}
+.no{color:var(--gold);font-size:13px;min-width:34px}
+.q{flex:1;font-weight:600}
+.tag{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:20px;padding:1px 8px;white-space:nowrap}
+.st{font-size:12px;white-space:nowrap}
+.st.ok{color:var(--ok)} .st.no{color:#d09a6a}
+.bd{display:none;padding:0 13px 12px;border-top:1px dashed var(--line)}
+.item.open .bd{display:block}
+.ans{white-space:pre-wrap;word-break:break-word;font-size:15px;margin:8px 0}
+.act{background:#2b2018;border-left:3px solid var(--gold);padding:8px 10px;border-radius:0 8px 8px 0;white-space:pre-wrap;font-size:15px}
+.warn{border-left:3px solid #d09a6a;padding:6px 10px;margin:6px 0;background:#2b2018;border-radius:0 8px 8px 0;font-size:13px;color:#d8b48a}
+.vs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.vs b{font-weight:400;font-size:12px;color:var(--gold);border:1px solid var(--line);border-radius:6px;padding:2px 7px;cursor:pointer;background:#181209}
+.vs b:hover{border-color:var(--gold)}
+.vtex{white-space:pre-wrap;background:#181209;border-left:3px solid var(--gold);padding:8px 10px;margin:6px 0;border-radius:0 8px 8px 0;font-size:15px}
+.vtex.bad{border-left-color:#d09a6a;color:var(--dim)}
+.meta{font-size:12px;color:var(--dim);margin-top:8px}
+.empty{color:var(--dim);text-align:center;padding:30px 10px}
+</style></head><body><div class=wrap>
+<h1>萨迦格言 · 问答台账</h1>
+<div class=sub>每次提问与按技能给出的回答，自动留档。回看标准是「动作做到几条」，不是「读了多少颂」。</div>
+<div class=cards id=kpi></div>
+<div class=bar>
+  <input id=s placeholder="搜索问题、答案、颂号…">
+  <select id=ft><option value=0>全部状态</option><option value=2>只看欠账</option><option value=1>只看已做到</option></select>
+  <div id=ty></div>
+</div>
+<div id=list></div>
+<div class=meta id=foot></div>
+</div>
+<script>
+/*CORE*/
+/*DATA*/
+const ROWS = D.rows, VM = D.verses;
+const S = stats(ROWS);
+const VALID2 = new Set(Object.keys(VM));                       // 与 record.js 同一判据：只认书中真实编号
+const baiN = a => countBai(a);
+const baiGap = r => baiCoverage(r.a, VALID2).verses && countBai(r.a) < baiCoverage(r.a, VALID2).verses;
+// 体检提示：合并成一处，避免与动作块抢同一个选择器
+const warns = r => {
+  const cov = baiCoverage(r.a, VALID2);
+  return [
+    ...(!r.action ? ['本条没有「动作：」行，无法验收。'] : []),
+    ...(cov.verses && cov.bai < cov.verses ? [`本条成段引 ${cov.verses} 颂，只给了 ${cov.bai} 行白话——有颂没译。`] : []),
+  ];
+};
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kpi = document.getElementById('kpi'), ty = document.getElementById('ty'), list = document.getElementById('list');
+const s = document.getElementById('s'), ft = document.getElementById('ft'), foot = document.getElementById('foot');
+
+kpi.innerHTML =
+  `<div class=kpi><b>${S.total}</b><span>提问</span></div>` +
+  `<div class=kpi><b>${S.rate}%</b><div class=gauge><i style="width:${S.rate}%"></i></div><span>动作完成率 ${S.done}/${S.act}</span></div>` +
+  Object.entries(S.by).map(([k, v]) => `<div class=kpi><b>${v}</b><span>${esc(k)}</span></div>`).join('');
+
+let type = '', st = 0, kw = '';
+const types = [...new Set(ROWS.map(r => r.type).filter(t => t && t !== '—'))];
+ty.innerHTML = `<button data-t="" class=on>全部类型</button>` + types.map(t => `<button data-t="${esc(t)}">${esc(t)}</button>`).join('');
+for (const b of ty.children) b.onclick = () => {
+  type = b.dataset.t;
+  for (const x of ty.children) x.classList.toggle('on', x === b);
+  draw();
+};
+ft.onchange = () => { st = +ft.value; draw() };
+s.oninput = () => { kw = s.value.trim().toLowerCase(); draw() };
+
+function draw() {
+  const hit = ROWS.filter(r =>
+    (!type || r.type === type) &&
+    (!st || (st === 1 ? r.done : !r.done)) &&
+    (!kw || (r.q + ' ' + r.a + ' ' + r.verses.join(' ')).toLowerCase().includes(kw)));
+  foot.textContent = `显示 ${hit.length} / ${ROWS.length} 条 ｜ 本文件由 record.js 生成，只读；要打勾请回窗口说「第N条做到了」`;
+  if (!hit.length) { list.innerHTML = '<div class=empty>没有符合条件的记录。</div>'; return }
+  list.innerHTML = hit.map(r => {
+    const vs = r.verses.map(v => `<b data-v="${esc(v)}">${esc(v)}</b>`).join('');
+    return `<div class=item>
+      <div class=hd><span class=no>#${r.n}</span><span class=q>${esc(r.q.split('\n')[0])}</span>
+        <span class=tag>${esc(r.type)}</span>
+        <span class="st ${r.done ? 'ok' : 'no'}">${r.done ? '✅ 已做到' : '☐ 待做'}</span></div>
+      <div class=bd>
+        ${vs ? '<div class=vs>' + vs + '</div><div class=vslot></div>' : ''}
+        <div class=ans>${esc(r.a)}</div>
+        ${warns(r).length ? warns(r).map(w => `<div class=warn>${esc(w)}</div>`).join('') : ''}
+        ${r.action ? `<div class=act><b>动作</b>：${esc(r.action)}${r.done && r.note ? ' ｜ 备注：' + esc(r.note) : ''}</div>` : ''}
+        <div class=meta>${esc(r.at)} ｜ 来源 ${esc(r.src || '窗口')}</div>
+      </div></div>`;
+  }).join('');
+  for (const it of list.children) {
+    it.querySelector('.hd').onclick = () => it.classList.toggle('open');
+    const slot = it.querySelector('.vslot');
+    for (const b of it.querySelectorAll('.vs b')) b.onclick = e => {
+      e.stopPropagation();
+      const id = b.dataset.v;
+      if (slot.dataset.show === id) { slot.innerHTML = ''; slot.dataset.show = ''; return }
+      slot.dataset.show = id;
+      slot.innerHTML = VM[id] ? `<div class=vtex><b style="color:var(--gold)">${esc(id)}</b>　${esc(VM[id])}</div>`
+                              : `<div class="vtex bad">${esc(id)} —— 本库无此编号，引用可能有误，请核对。</div>`;
+    };
+  }
+}
+draw();
+// 有欠账时自动展开最近一条，提示还有事没做
+if (S.act && S.done === 0) { const el = list.lastElementChild; if (el) el.classList.add('open') }
+</script></body></html>

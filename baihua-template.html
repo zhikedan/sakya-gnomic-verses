@@ -1,0 +1,59 @@
+<!DOCTYPE html><html lang=zh-CN><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=theme-color content="#1b1410">
+<title>萨迦格言 · 原文白话全本</title><style>
+:root{--bg:#1b1410;--card:#241b15;--ink:#f0e6d2;--dim:#a89880;--gold:#d8a94b;--line:#3a2c22}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:820px;margin:0 auto;padding:14px 12px 60px}h1{font-size:19px;margin:6px 0}
+.sub{color:var(--dim);font-size:13px;margin-bottom:12px}.bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+input{flex:1;min-width:170px;font:inherit;background:#181209;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px}
+button{font:inherit;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+button.on{border-color:var(--gold);color:var(--gold)}
+.v{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;margin:8px 0;padding:10px 12px}
+.v i{color:var(--gold);font-style:normal;font-size:12px}.v p{margin:6px 0 0}.bai{color:#d6c8ac;font-size:15px}
+.meta{font-size:12px;color:var(--dim);margin-top:8px}
+</style></head><body><div class=wrap>
+<h1>萨迦格言 · 原文白话全本</h1>
+<div class=sub>/*SUBTITLE*/</div>
+<div class=bar><input id=s placeholder="搜颂文、白话、编号（如 8.25）"><div id=chbar></div></div>
+<div id=list></div><div class=meta id=foot></div></div>
+<script>
+/*DATA*/
+/*NAMES*/
+const CN='一二三四五六七八九';
+const $=id=>document.getElementById(id);
+const chbar=$('chbar'), list=$('list'), foot=$('foot'), inp=$('s');
+let sel=0, kw='';
+chbar.innerHTML='<button data-c=0 class=on>全九品</button>'+Object.keys(NM).map(function(n){
+  return '<button data-c='+n+'>第'+CN[n-1]+'品 '+NM[n]+'</button>';
+}).join('');
+for (const b of chbar.children) b.onclick=function(){
+  sel=+b.dataset.c;
+  for (const x of chbar.children) x.classList.toggle('on', x===b);
+  draw();
+};
+inp.oninput=function(){ kw=inp.value.trim().toLowerCase(); draw(); };
+const e=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function draw(){
+  const one=function(v){
+    return (!sel||v.ch===sel)&&(!kw||v.id.toLowerCase().includes(kw)||v.v.toLowerCase().includes(kw)||v.b.toLowerCase().includes(kw));
+  };
+  let hit=D.filter(one), loose=0;
+  if(!hit.length && kw.length>1){              // 整串搜不到时按命中字数兜底：用户记不住原话
+    const chars=[...new Set(kw.replace(/[\s，。、？！；：]/g,''))];
+    const s2=v=>(v.v+' '+v.b).toLowerCase();
+    const scored=D.map(function(v){
+      if(sel&&v.ch!==sel) return null;
+      const t=s2(v), n=chars.filter(function(c){return t.includes(c)}).length;
+      return n? {v:v, n:n}:null;
+    }).filter(Boolean).sort(function(a,b){return b.n-a.n});
+    const best=scored.length?scored[0].n:0;
+    hit=scored.filter(function(x){return x.n>=Math.max(2, best-1)}).map(function(x){return x.v});
+    loose=hit.length?1:0;
+  }
+  foot.textContent='显示 '+hit.length+' / '+D.length+' 颂'+(loose?'（记不清原话？已按单字近似匹配）':'');
+  list.innerHTML=hit.slice(0,300).map(function(v){
+    return '<div class=v><i>'+v.id+' · 第'+CN[v.ch-1]+'品 '+NM[v.ch]+'</i><p>'+e(v.v)+'</p><p class=bai>→ 白话：'+e(v.b)+'</p></div>';
+  }).join('')+(hit.length>300?'<div class=meta>只列前 300 条，请加关键词或选品。</div>':'');
+}
+draw();
+</script></body></html>
