@@ -15,7 +15,7 @@
 | `references/12-现代应用手册.md` | 职场／管理／合作／交友／教育／自处 的场景动作 |
 | `references/13-诵读与自省法.md` | 三层解码、日课、周课、教学、写作 |
 | `白话全书/` | **459 颂逐颂「原文 + → 白话」**，含合并全本与可搜索网页 |
-| `问答记录/` | 问答留痕台账（仓库内为**格式示例**，真实记录本地生成、不入库） |
+| `问答记录/` | 问答留痕台账。仓库只放格式示例 `qa.example.json`；真实问答本地生成、已被 `.gitignore` 排除 |
 
 ### 白话全书
 
@@ -35,12 +35,13 @@
 ## 快速开始
 
 ```bash
+npm test                 # 一次跑完全部校验（推荐）
 node check_baihua.js     # 459 颂：逐字比对原文、每颂配白话、无漏颂
 node check_refs.js       # 引用编号真实性、翻译残留、九品一览覆盖
 node test_core.js        # 抽取/合并/去重/统计内核
-node test_commit.js      # 问答入库端到端（在临时目录跑，不碰真实台账）
-node record.js rebuild   # 重建问答台账 .md / .html
-node build_baihua.js     # 重建白话全书 md / html
+node test_commit.js      # 问答入库端到端（在临时目录跑，不碰本地台账）
+node build_baihua.js     # 重建白话全书 md / html / index.html
+node record.js init      # 首次建本地台账；之后 commit / todo / done / stats
 ```
 
 或一次跑全部：
@@ -53,9 +54,10 @@ npm test
 
 ## 问答留痕
 
-`record.js` 把「提问 + 按技能规范给出的回答」逐条落盘，并重建可读台账。规则写在 [SKILL.md](SKILL.md) 第七节：答案末尾必须有独立一行 `动作：…`，颂号以 `20-全文.md` 校验，白话逐颂配齐。
+`record.js` 把「提问 + 按技能规范给出的回答」逐条落盘，并重建可读台账。规则写在 [SKILL.md](SKILL.md) 第七节：答案末尾必须有独立一行 `动作：…`，颂号以 `20-全文.md` 校验（写错、编造、截半颂一律拒绝入库），每颂须配白话。
 
 ```bash
+node record.js init            # 首次：从 qa.example.json 建本地台账
 # 1) 写 问答记录/pending.txt（首行「问：…」，其余为答案）
 node record.js commit          # 入库并重建台账
 node record.js todo            # 看还没做到的动作
@@ -65,7 +67,7 @@ node record.js stats           # 类型分布、动作完成率、白话覆盖
 
 > **回看标准是「动作做到几条」，不是「读了多少颂」。**
 
-`问答记录/` 里的 `qa.json`、`问答记录.md`、`问答记录.html` 目前是**格式示例**。它们被 `.gitignore` 排除，使用者的真实问答只留在自己机器上。`node record.js rebuild` 可随时从示例重建。
+**隐私**：真实问答（`问答记录/qa.json`、`问答记录.md`、`问答记录.html`）已被 `.gitignore` 排除，只存你本机；仓库里只有 `qa.example.json` 一份格式示例。CI 会检查这三个文件没被误跟踪。台账网页由 `node record.js rebuild` 在本地生成，双击即看。
 
 ## 目录结构
 

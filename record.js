@@ -14,6 +14,7 @@ const { readVerses } = require('./verses');
 const DIR = path.join(__dirname, '问答记录');
 const DB = path.join(DIR, 'qa.json'), MD = path.join(DIR, '问答记录.md');
 const HTML = path.join(DIR, '问答记录.html'), PEND = path.join(DIR, 'pending.txt');
+const EXAMPLE = path.join(DIR, 'qa.example.json');
 const TPL = path.join(__dirname, 'qa-template.html'), CORE = path.join(__dirname, 'qa-core.js');
 
 // 书里真实存在的颂号：答案里写了不存在的编号，不进台账（唯一依据是 20-全文.md）
@@ -97,7 +98,13 @@ function readPending(f) {
   if (nl > 0 && nl < 80 && !/^[「【\d]/.test(raw)) return { q: raw.slice(0, nl).trim(), a: raw.slice(nl + 1).trim() };
   return { q: '', a: raw };
 }
-if (cmd === 'commit') {
+if (cmd === 'init') {
+  // 新人 clone 后：从示例建一份本地台账（真实数据不入库，见 .gitignore）
+  if (fs.existsSync(DB)) { console.log('已有本地台账：' + DB + '（' + load().length + ' 条），未覆盖'); process.exit(0) }
+  const rows = fs.existsSync(EXAMPLE) ? readJson(EXAMPLE) : [];
+  save(rows);
+  console.log(`已从示例建台账：${rows.length} 条（含格式示例）。真实问答只存本机，不会被提交。`);
+} else if (cmd === 'commit') {
   const f = process.argv[3] || PEND;
   if (!fs.existsSync(f)) { console.log('没有待录入文件：' + f); process.exit(1) }
   const { q, a } = readPending(f);
