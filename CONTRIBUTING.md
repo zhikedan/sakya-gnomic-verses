@@ -33,7 +33,9 @@ npm test
 
 ## 隐私
 
-`问答记录/` 里 `qa.json`、`问答记录.md`、`问答记录.html` 在仓库中是**格式示例**。真实问答由 `node record.js commit` 在使用者本机生成，可能包含个人处境，请勿提交到公开仓库。`.gitignore` 已忽略 `pending.txt` 等临时文件。
+仓库里**只有** `问答记录/qa.example.json`（一份格式示例）。真实问答 `qa.json`、`问答记录.md`、`问答记录.html` 由 `node record.js commit` 在使用者本机生成，可能包含个人处境，已被 `.gitignore` 排除，**不要提交**。CI 有一步专门检查这三个文件没被误跟踪，一旦被加进 `git ls-files` 就直接失败。
+
+提 PR 前请确认 `git status` 里没有 `问答记录/qa.json`。
 
 ## 结构
 
