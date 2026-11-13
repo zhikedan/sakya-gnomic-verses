@@ -14,8 +14,10 @@ jobs:
           node-version: 20
       - name: 全量自检（白话逐字 / 引用编号 / 内核 / 入库端到端）
         run: node selftest.js
-      - name: 台账与全书可重建
+      - name: 产物必须与仓库一致（改源未重建则失败）
         run: |
           node build_baihua.js
           node record.js rebuild
           node check_baihua.js
+          git diff --exit-code -- 白话全书 index.html 问答记录/问答记录.html \
+            || { echo "产物与源不一致，请本地运行：node build_baihua.js && node record.js rebuild"; exit 1; }

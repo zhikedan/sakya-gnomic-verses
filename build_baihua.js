@@ -51,4 +51,8 @@ fs.writeFileSync(path.join(DIR, '萨迦格言-原文白话全本.html'),
   tpl.replace('/*SUBTITLE*/', () => sub)
      .replace('/*DATA*/', () => 'const D = ' + data)
      .replace('/*NAMES*/', () => 'const NM = ' + JSON.stringify(NAME)), 'utf8');
+
+// 同一份内容再落一个 ASCII 名到仓库根：GitHub Pages 直接可读，URL 不含中文转义。
+// 由本脚本生成，不手工复制，避免两份漂移；CI 每次重建并校验无差异。
+fs.copyFileSync(path.join(DIR, '萨迦格言-原文白话全本.html'), path.join(__dirname, 'index.html'));
 console.log('已生成 萨迦格言-原文白话全本.html', Math.round(fs.statSync(path.join(DIR, '萨迦格言-原文白话全本.html')).size / 1024) + ' KB', '| 颂条目', items.length);
