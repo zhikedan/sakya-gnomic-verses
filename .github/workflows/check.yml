@@ -1,0 +1,21 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 全量自检（白话逐字 / 引用编号 / 内核 / 入库端到端）
+        run: node selftest.js
+      - name: 台账与全书可重建
+        run: |
+          node build_baihua.js
+          node record.js rebuild
+          node check_baihua.js
